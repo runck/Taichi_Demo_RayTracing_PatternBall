@@ -87,12 +87,12 @@ def ray_color(ray):
                     brightness *= color
                 # Pattern
                 elif material == 5:
-                    v1 = (9*camera.cam_horizontal[None] - camera.cam_vertical[None])/10
-                    v2 = (camera.cam_horizontal[None] + 9*camera.cam_vertical[None])/10
+                    v1 = (camera.cam_horizontal[None] + camera.cam_vertical[None])/2
+                    v2 = (camera.cam_horizontal[None] - camera.cam_vertical[None])/2
                     cos_theta = min(-scattered_direction.normalized().dot(hit_point_normal), 1.0)
                     if (
-                        int(hit_point_normal.dot(v1)*10)%2 == 1
-                        and int(hit_point_normal.dot(v2)*10)%2 == 1
+                        int(hit_point_normal.dot(v1)*13)%2 == 1
+                        and int(hit_point_normal.dot(v2)*20)%2 == 1
                     ):
                         brightness *= color*5*cos_theta*cos_theta
                     else:
@@ -101,28 +101,25 @@ def ray_color(ray):
                                             + 0.1 * random_unit_vector())
                     scattered_origin = hit_point
                 elif material == 6:
-                    v2 = (camera.cam_horizontal[None] - camera.cam_vertical[None])/2
-                    v1 = (camera.cam_horizontal[None] + camera.cam_vertical[None])/2
-                    th = ti.random()*0.8
+                    v1 = ti.pow((hit_point_normal), 2)
                     if (
-                        ti.sin(hit_point_normal.dot(v1)*50) > 0+th
-                        and ti.sin(hit_point_normal.dot(v2)*50)> -0.5+th
+                        v1.dot(v1) % 0.2 >0.1
                     ):
-                        brightness *= color*0.9
+                        brightness *= color
                     else:
-                        brightness *= (1-color)*0.8
+                        brightness *= (1-color)
                     scattered_direction = (reflect(scattered_direction.normalized(), hit_point_normal) 
-                                            + 0.4 * random_unit_vector())
+                                            + 0.1 * random_unit_vector())
                     scattered_origin = hit_point
                 elif material == 7:
                     v1 = camera.cam_vertical[None]
                     v2 = camera.cam_horizontal[None]
                     v3 = (camera.cam_horizontal[None] + camera.cam_vertical[None])/2
-                    th = ti.random()*0.2
+                    th = ti.random()*0.1
                     if (
-                         th+0.3 > hit_point_normal.dot(v1) + ti.sin(hit_point_normal.dot(v2)*PI*3)*0.2 >th-0.1
+                         th+0.2 > (hit_point_normal.dot(v1) + ti.sin(hit_point_normal.dot(v2)*PI*3)*0.2)%0.5 >th-0.1
                          or
-                         th+0.3 > hit_point_normal.dot(v2) + ti.sin(hit_point_normal.dot(v1)*PI*3)*0.2 >th-0.1
+                         th+0.2 > (hit_point_normal.dot(v2) + ti.sin(hit_point_normal.dot(v1)*PI*3)*0.2)%0.5 >th-0.1
                     ):
                         brightness *= color
                     else:
@@ -130,7 +127,22 @@ def ray_color(ray):
                     scattered_direction = (reflect(scattered_direction.normalized(), hit_point_normal) 
                                             + 0.4 * random_unit_vector())
                     scattered_origin = hit_point
-                
+                elif material == 8:
+                    v1 = camera.cam_vertical[None]
+                    v2 = camera.cam_horizontal[None]
+                    v3 = v1.cross(v2).normalized()
+                    v4 = ( v1*1.2 + v2 - v3).normalized()
+                    v5 = (-v1 - v2*1.2 - v3*2).normalized()
+                    if (
+                         hit_point_normal.dot(v2) + ti.sin((hit_point_normal.dot(v1)-0.1)*PI*0.8)*0.5 >0
+                         and hit_point_normal.dot(v4)<0.95
+                         or  hit_point_normal.dot(v5)>0.95
+                    ):
+                        brightness *= color*0.5
+                    else:
+                        brightness *= (1-color)*1.5
+                    scattered_direction = hit_point_normal + random_unit_vector()
+                    scattered_origin = hit_point
                 brightness /= p_RR
     return color_buffer
 
@@ -156,13 +168,13 @@ if __name__ == "__main__":
     scene.add(Sphere(center=ti.Vector([101.5, 0, -1]), radius=100.0, material=1, color=ti.Vector([0.0, 0.6, 0.0])))
 
     # Diffuse ball
-    scene.add(Sphere(center=ti.Vector([0, -0.2, -1.5]), radius=0.3, material=1, color=ti.Vector([0.8, 0.3, 0.3])))
+    scene.add(Sphere(center=ti.Vector([0, -0.2, -1.5]), radius=0.3, material=8, color=ti.Vector([0.1, 0.1, 0.1])))
     # Metal ball
     scene.add(Sphere(center=ti.Vector([-0.8, 0.2, -1]), radius=0.7, material=5, color=ti.Vector([0.0, 0.4, 0.8])))
     # Glass ball
-    scene.add(Sphere(center=ti.Vector([0.7, 0, -0.5]), radius=0.5, material=6, color=ti.Vector([0.0, 0.4, 0.8])))
+    scene.add(Sphere(center=ti.Vector([0.7, 0, -0.5]), radius=0.5, material=7, color=ti.Vector([0.0, 0.4, 0.8])))
     # Metal ball-2
-    scene.add(Sphere(center=ti.Vector([0.6, -0.3, -2.0]), radius=0.4, material=7, color=ti.Vector([0.0, 0.4, 0.8])))
+    scene.add(Sphere(center=ti.Vector([0.6, -0.3, -2.0]), radius=0.4, material=6, color=ti.Vector([0.0, 0.4, 0.8])))
     # Pattern ball
     # scene.add(Sphere(center=ti.Vector([0.4, 1.5, -1.2]), radius=0.6, material=5, color=ti.Vector([0.0, 0.4, 0.8])))
     # scene.add(Sphere(center=ti.Vector([-0.4, 1.6, -1.3]), radius=0.5, material=6, color=ti.Vector([0.0, 0.4, 0.8])))
