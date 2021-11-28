@@ -127,6 +127,7 @@ def ray_color(ray):
                     scattered_direction = (reflect(scattered_direction.normalized(), hit_point_normal) 
                                             + 0.4 * random_unit_vector())
                     scattered_origin = hit_point
+                # taichi
                 elif material == 8:
                     v1 = camera.cam_vertical[None]
                     v2 = camera.cam_horizontal[None]
@@ -143,6 +144,40 @@ def ray_color(ray):
                         brightness *= (1-color)*1.5
                     scattered_direction = hit_point_normal + random_unit_vector()
                     scattered_origin = hit_point
+                #bubble
+                elif material == 9:
+                    cos_theta = -scattered_direction.normalized().dot(hit_point_normal)
+                    cos_theta_pow = ti.pow(cos_theta, 2)
+                    rand = ti.random()*0.9+abs(cos_theta)*0.1
+                    scattered_origin = hit_point + random_in_unit_sphere()*0.01
+                    trans_ratio = 0.3
+                    trans_ratio_2 = 0.5
+                    brightness *= color
+                    if front_face:
+                        brightness *= (trans_ratio+(cos_theta)*(1-trans_ratio))
+                        if rand>0.9:
+                            scattered_direction = reflect(scattered_direction.normalized(), hit_point_normal)
+                        scattered_direction += random_unit_vector()*(cos_theta_pow)*0.008
+                    else:
+                        brightness *= (trans_ratio_2+(cos_theta)*(trans_ratio_2))
+                        if rand>0.95:
+                            scattered_direction = reflect(scattered_direction.normalized(), hit_point_normal)
+                        scattered_direction += random_unit_vector()*(cos_theta_pow)*0.01
+                    brightness = ti.sqrt(brightness)
+                #gas
+                elif material == 10:
+                    cos_theta = -scattered_direction.normalized().dot(hit_point_normal)
+                    cos_theta_pow = ti.pow(cos_theta, 3)
+                    scattered_origin = hit_point
+                    trans_ratio = 0.3
+                    trans_ratio_2 = 0.2
+                    brightness *= color
+                    if ti.random()>0.8:
+                        scattered_direction += random_unit_vector()*0.03
+                    if front_face:
+                        brightness *= (trans_ratio+(1-cos_theta_pow)*(1-trans_ratio))
+                    else:
+                        brightness *= (trans_ratio_2+(1-cos_theta_pow)*(1-trans_ratio_2))
                 brightness /= p_RR
     return color_buffer
 
@@ -174,7 +209,9 @@ if __name__ == "__main__":
     # Glass ball
     scene.add(Sphere(center=ti.Vector([0.7, 0, -0.5]), radius=0.5, material=7, color=ti.Vector([0.0, 0.4, 0.8])))
     # Metal ball-2
-    scene.add(Sphere(center=ti.Vector([0.6, -0.3, -2.0]), radius=0.4, material=6, color=ti.Vector([0.0, 0.4, 0.8])))
+    scene.add(Sphere(center=ti.Vector([0.6, -0.15, -2.0]), radius=0.35, material=6, color=ti.Vector([0.0, 0.4, 0.8])))
+    scene.add(Sphere(center=ti.Vector([-0.05, 0.6, -2.5]), radius=0.3, material=9, color=ti.Vector([1, 1, 1])))
+    scene.add(Sphere(center=ti.Vector([0.5, 0.8, -2.5]), radius=0.4, material=10, color=ti.Vector([1, 1, 1])))
     # Pattern ball
     # scene.add(Sphere(center=ti.Vector([0.4, 1.5, -1.2]), radius=0.6, material=5, color=ti.Vector([0.0, 0.4, 0.8])))
     # scene.add(Sphere(center=ti.Vector([-0.4, 1.6, -1.3]), radius=0.5, material=6, color=ti.Vector([0.0, 0.4, 0.8])))
